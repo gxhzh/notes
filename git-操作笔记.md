@@ -69,6 +69,28 @@ Git 操作
    11.3 git push -u origin branch-name
    11.4 git push --force-with-lease
    11.5 push 前的日常检查
+12. git switch
+   12.1 git switch branch-name
+   12.2 git switch -c branch-name
+   12.3 git switch -
+13. git branch 分支管理
+   13.1 git branch branch-name
+   13.2 git branch -d branch-name
+   13.3 git branch -D branch-name
+14. git merge
+   14.1 git merge branch-name
+   14.2 merge 后原分支是否还在
+   14.3 merge 冲突时怎么办
+15. PR / Pull Request
+   15.1 PR 在 Git 流程里的位置
+   15.2 PR 的意义
+   15.3 PR 和 git merge 的关系
+16. git remote
+   16.1 git remote add origin url
+   16.2 git remote -v
+   16.3 origin 是什么
+   16.4 为什么叫 origin，不叫项目名
+   16.5 修改远程地址
 ```
 
 ## Git 操作
@@ -1694,4 +1716,462 @@ git branch --show-current
 
 ```bash
 git remote -v
+```
+
+### 12. git switch
+
+`git switch` 主要用于切换分支。
+
+以前常用 `git checkout` 切分支，新版本 Git 更推荐用 `git switch`，语义更清楚。
+
+#### 12.1 git switch branch-name
+
+作用：
+
+```bash
+git switch branch-name
+```
+
+切换到已经存在的分支。
+
+例如：
+
+```bash
+git switch main
+```
+
+表示切换到 `main` 分支。
+
+```bash
+git switch feature/login
+```
+
+表示切换到 `feature/login` 分支。
+
+切换前建议先看：
+
+```bash
+git status
+```
+
+如果当前工作区有未提交改动，切分支可能会被 Git 阻止，或者把改动带到新分支上。
+
+#### 12.2 git switch -c branch-name
+
+作用：
+
+```bash
+git switch -c branch-name
+```
+
+创建新分支，并立刻切换到这个新分支。
+
+例如：
+
+```bash
+git switch -c feature/git-notes
+```
+
+意思是：
+
+```text
+从当前分支当前 commit 创建 feature/git-notes 分支，并切换过去。
+```
+
+日常开发新功能常用这个命令。
+
+#### 12.3 git switch -
+
+作用：
+
+```bash
+git switch -
+```
+
+切回上一个分支。
+
+例如你刚从 `main` 切到 `feature/login`：
+
+```bash
+git switch feature/login
+```
+
+再执行：
+
+```bash
+git switch -
+```
+
+会回到 `main`。
+
+### 13. git branch 分支管理
+
+`git branch` 除了查看分支，也可以创建和删除分支。
+
+#### 13.1 git branch branch-name
+
+作用：
+
+```bash
+git branch branch-name
+```
+
+只创建新分支，但不切换过去。
+
+例如：
+
+```bash
+git branch feature/git-notes
+```
+
+这会创建 `feature/git-notes` 分支，但你仍然停留在当前分支。
+
+如果想创建并切换，日常更推荐：
+
+```bash
+git switch -c feature/git-notes
+```
+
+#### 13.2 git branch -d branch-name
+
+作用：
+
+```bash
+git branch -d branch-name
+```
+
+删除本地分支。
+
+例如：
+
+```bash
+git branch -d feature/git-notes
+```
+
+通常用于功能分支已经合并之后，清理本地分支。
+
+`-d` 是相对安全的删除。如果 Git 认为这个分支还没有被合并，会阻止删除。
+
+#### 13.3 git branch -D branch-name
+
+作用：
+
+```bash
+git branch -D branch-name
+```
+
+强制删除本地分支。
+
+它比 `-d` 更危险。
+
+如果这个分支上的 commit 还没有合并到其他分支，强制删除后可能不好找回。
+
+简单记：
+
+```text
+git branch -d = 安全删除
+git branch -D = 强制删除
+```
+
+### 14. git merge
+
+`git merge` 的作用是把另一个分支的改动合并到当前分支。
+
+重点是：
+
+```text
+先切到接收改动的分支，再 merge 另一个分支。
+```
+
+#### 14.1 git merge branch-name
+
+作用：
+
+```bash
+git merge branch-name
+```
+
+把 `branch-name` 分支合并到当前分支。
+
+例如，想把 `feature/git-notes` 合并进 `main`：
+
+```bash
+git switch main
+git merge feature/git-notes
+```
+
+意思是：
+
+```text
+当前在 main，所以把 feature/git-notes 的改动合并进 main。
+```
+
+#### 14.2 merge 后原分支是否还在
+
+合并之后，原分支不会自动消失。
+
+例如：
+
+```bash
+git switch main
+git merge feature/git-notes
+```
+
+合并完成后，`feature/git-notes` 仍然存在。
+
+如果确定不需要了，可以删除：
+
+```bash
+git branch -d feature/git-notes
+```
+
+#### 14.3 merge 冲突时怎么办
+
+如果两个分支改了同一个文件的同一块内容，可能出现冲突。
+
+这时 `git status` 会提示哪些文件冲突。
+
+处理流程：
+
+```text
+1. 打开冲突文件。
+2. 手动选择保留哪些内容。
+3. 保存文件。
+4. git add 冲突文件。
+5. git commit。
+```
+
+常见命令：
+
+```bash
+git status
+git add file
+git commit
+```
+
+冲突文件里可能会看到：
+
+```text
+<<<<<<< HEAD
+当前分支内容
+=======
+被合并分支内容
+>>>>>>> feature/git-notes
+```
+
+这些标记需要手动处理掉。
+
+### 15. PR / Pull Request
+
+PR 是 GitHub/GitLab 等平台提供的协作流程，不是 Git 底层命令。
+
+Git 底层真正做合并的是：
+
+```bash
+git merge
+```
+
+PR 可以理解成：
+
+```text
+请求把一个远程分支合并进另一个远程分支。
+```
+
+#### 15.1 PR 在 Git 流程里的位置
+
+典型流程：
+
+```bash
+git switch -c feature/login
+# 修改代码
+git add .
+git commit -m "add login page"
+git push -u origin feature/login
+```
+
+然后在 GitHub 上开 PR：
+
+```text
+feature/login -> main
+```
+
+所以 PR 位于：
+
+```text
+push 到远程分支之后，merge 到 main 之前。
+```
+
+#### 15.2 PR 的意义
+
+PR 的主要作用：
+
+- 让别人 review 你的代码。
+- 保护 `main` 分支。
+- 触发 CI 检查，例如 lint、test、build。
+- 记录这次改动的讨论过程。
+- 让团队协作更有秩序。
+
+简单理解：
+
+```text
+commit = 我在本地保存了一次改动
+push = 我把改动上传到远程分支
+PR = 我请求团队把这个分支合并进 main
+merge = 审核通过后真正合并
+```
+
+#### 15.3 PR 和 git merge 的关系
+
+PR 不是 Git 命令，而是平台流程。
+
+在 GitHub 上点击 “Merge pull request”，底层效果类似于把 PR 分支合并进目标分支。
+
+区别是 PR 额外提供了：
+
+- 页面化 diff。
+- 评论和 review。
+- 自动检查。
+- 权限控制。
+- 合并记录。
+
+### 16. git remote
+
+`git remote` 用于管理本地仓库关联的远程仓库地址。
+
+远程仓库通常是 GitHub、GitLab、Gitee 上的仓库。
+
+#### 16.1 git remote add origin url
+
+作用：
+
+```bash
+git remote add origin url
+```
+
+给当前本地仓库添加一个远程仓库地址，并把这个远程仓库命名为 `origin`。
+
+例如：
+
+```bash
+git remote add origin https://github.com/gxhzh/notes.git
+```
+
+意思是：
+
+```text
+给当前本地仓库添加一个远程仓库。
+这个远程仓库地址是 https://github.com/gxhzh/notes.git。
+我在本地把它叫做 origin。
+```
+
+之后就可以：
+
+```bash
+git push -u origin main
+```
+
+意思是把本地 `main` 分支推送到 `origin` 这个远程仓库。
+
+#### 16.2 git remote -v
+
+作用：
+
+```bash
+git remote -v
+```
+
+查看当前本地仓库绑定了哪些远程仓库地址。
+
+示例：
+
+```text
+origin  https://github.com/gxhzh/notes.git (fetch)
+origin  https://github.com/gxhzh/notes.git (push)
+```
+
+其中：
+
+- `fetch`：从远程拉取时使用的地址。
+- `push`：推送到远程时使用的地址。
+
+大多数时候 fetch 和 push 地址相同。
+
+#### 16.3 origin 是什么
+
+`origin` 是远程仓库名，也可以理解为远程仓库地址的本地别名。
+
+它不是分支名，也不是项目名。
+
+例如：
+
+```bash
+git remote add origin https://github.com/gxhzh/notes.git
+```
+
+这里：
+
+- `origin` 是远程仓库别名。
+- `https://github.com/gxhzh/notes.git` 是真正的远程仓库地址。
+- `notes` 才是 GitHub 上的仓库名。
+
+#### 16.4 为什么叫 origin，不叫项目名
+
+因为一个本地仓库可以绑定多个远程仓库。
+
+远程名只是本地为了方便引用远程地址起的名字。
+
+默认习惯叫 `origin`，意思大概是：
+
+```text
+这个仓库最初克隆或主要对应的远程来源。
+```
+
+但它不是必须叫 `origin`。
+
+你也可以叫别的名字：
+
+```bash
+git remote add github https://github.com/gxhzh/notes.git
+```
+
+那推送时就要写：
+
+```bash
+git push github main
+```
+
+只是大家约定俗成地用 `origin`，所以大多数教程和项目都这么写。
+
+简单记：
+
+```text
+origin = 远程仓库地址的本地别名
+main   = 分支名
+notes  = GitHub 上的仓库名
+```
+
+#### 16.5 修改远程地址
+
+如果远程地址写错了，可以修改：
+
+```bash
+git remote set-url origin 新地址
+```
+
+例如：
+
+```bash
+git remote set-url origin https://github.com/gxhzh/notes.git
+```
+
+如果想删除远程绑定：
+
+```bash
+git remote remove origin
+```
+
+然后可以重新添加：
+
+```bash
+git remote add origin 新地址
 ```
